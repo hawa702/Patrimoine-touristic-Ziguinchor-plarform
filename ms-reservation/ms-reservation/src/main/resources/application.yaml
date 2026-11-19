@@ -1,0 +1,36 @@
+server:
+  port: 3004
+
+spring:
+  application:
+    name: ms-reservation
+  datasource:
+    url: 'jdbc:h2:mem:reservationdb'
+  h2:
+    console:
+      enabled: true
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    discovery:
+      enabled: false
+
+# URLs des microservices appelés par ms-reservation
+# (plus tard avec Eureka + LoadBalancer : http://ms-circuit et http://ms-evenement)
+services:
+  circuit:
+    url: http://localhost:3002
+  evenement:
+    url: http://localhost:3003
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'

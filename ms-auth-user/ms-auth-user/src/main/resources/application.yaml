@@ -1,0 +1,21 @@
+server:
+  port: 3000
+
+spring:
+  application:
+    name: ms-auth-user
+  datasource:
+    url: 'jdbc:h2:mem:userdb'
+  h2:
+    console:
+      enabled: true
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'

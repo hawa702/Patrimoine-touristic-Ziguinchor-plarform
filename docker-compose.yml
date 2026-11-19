@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # =========================================================================
+  # 1. API Gateway / Reverse Proxy & CORS Orchestrator (Port 8080)
+  # =========================================================================
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ms-auth-user
+      - ms-patrimoine
+      - ms-circuit
+      - ms-evenement
+      - ms-reservation
+    networks:
+      - tourisme-network
+    restart: unless-stopped
+
+  # =========================================================================
+  # 2. Service Authentification, Utilisateurs, Guides & Avis (Port 3000)
+  # =========================================================================
+  ms-auth-user:
+    build:
+      context: ./ms-auth-user/ms-auth-user
+      dockerfile: Dockerfile
+    container_name: ms-auth-user
+    ports:
+      - "3000:3000"
+    environment:
+      - SERVER_PORT=3000
+    networks:
+      - tourisme-network
+    restart: unless-stopped
+
+  # =========================================================================
+  # 3. Microservice Patrimoine / Sites touristiques (Port 3001)
+  # =========================================================================
+  ms-patrimoine:
+    build:
+      context: ./ms-patrimoine/ms-patrimoine
+      dockerfile: Dockerfile
+    container_name: ms-patrimoine
+    ports:
+      - "3001:3001"
+    environment:
+      - SERVER_PORT=3001
+    networks:
+      - tourisme-network
+    restart: unless-stopped
+
+  # =========================================================================
+  # 4. Microservice Circuits & Étapes (Port 3002)
+  # =========================================================================
+  ms-circuit:
+    build:
+      context: ./ms-circuit/ms-circuit
+      dockerfile: Dockerfile
+    container_name: ms-circuit
+    ports:
+      - "3002:3002"
+    environment:
+      - SERVER_PORT=3002
+      - SERVICES_PATRIMOINE_URL=http://ms-patrimoine:3001
+    depends_on:
+      - ms-patrimoine
+    networks:
+      - tourisme-network
+    restart: unless-stopped
+
+  # =========================================================================
+  # 5. Microservice Événements & Visites guidées (Port 3003)
+  # =========================================================================
+  ms-evenement:
+    build:
+      context: ./ms-evenement/ms-evenement
+      dockerfile: Dockerfile
+    container_name: ms-evenement
+    ports:
+      - "3003:3003"
+    environment:
+      - SERVER_PORT=3003
+      - SERVICES_PATRIMOINE_URL=http://ms-patrimoine:3001
+    depends_on:
+      - ms-patrimoine
+    networks:
+      - tourisme-network
+    restart: unless-stopped
+
+  # =========================================================================
+  # 6. Microservice Réservations & Disponibilités (Port 3004)
+  # =========================================================================
+  ms-reservation:
+    build:
+      context: ./ms-reservation/ms-reservation
+      dockerfile: Dockerfile
+    container_name: ms-reservation
+    ports:
+      - "3004:3004"
+    environment:
+      - SERVER_PORT=3004
+      - SERVICES_CIRCUIT_URL=http://ms-circuit:3002
+      - SERVICES_EVENEMENT_URL=http://ms-evenement:3003
+    depends_on:
+      - ms-circuit
+      - ms-evenement
+    networks:
+      - tourisme-network
+    restart: unless-stopped
+
+  # =========================================================================
+  # 7. Frontend Angular (Port 4200)
+  # =========================================================================
+  frontend-angular:
+    build:
+      context: ./frontend-angular
+      dockerfile: Dockerfile
+    container_name: frontend-angular
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - tourisme-network
+    restart: unless-stopped
+
+networks:
+  tourisme-network:
+    driver: bridge
